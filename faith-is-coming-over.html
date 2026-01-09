@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YAY FAITH IS COMING OVER!!!</title>
+  <style>
+    /* RESET */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Comic Sans MS', 'Trebuchet MS', system-ui, sans-serif;
+      background: linear-gradient(180deg, #ffb6f3, #ffe6fa);
+      overflow-x: hidden;
+      min-height: 100vh;
+      text-align: center;
+    }
+
+    /* BIG LOVE TITLE */
+    h1 {
+      margin-top: 2rem;
+      font-size: clamp(2.2rem, 7vw, 4rem);
+      color: #ff1493;
+      text-shadow: 0 0 10px #fff, 0 0 20px hotpink;
+      animation: pulse 1.2s infinite alternate;
+      padding: 1rem;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    /* HEARTS FLOATING */
+    .heart {
+      position: fixed;
+      bottom: -50px;
+      font-size: 1.5rem;
+      animation: floatUp linear infinite;
+      opacity: 0.9;
+    }
+
+    @keyframes floatUp {
+      from { transform: translateY(0) rotate(0deg); }
+      to { transform: translateY(-110vh) rotate(360deg); }
+    }
+
+    /* HAMSTERS */
+    .hamster {
+      position: fixed;
+      font-size: 2.2rem;
+      animation: runAcross 6s linear infinite;
+    }
+
+    @keyframes runAcross {
+      0% { left: -20%; transform: scaleX(1); }
+      49% { transform: scaleX(1); }
+      50% { left: 120%; transform: scaleX(-1); }
+      99% { transform: scaleX(-1); }
+      100% { left: -20%; }
+    }
+
+    /* PARTY ZONE */
+    .party {
+      margin: 2rem 0 4rem;
+      font-size: 1.6rem;
+      animation: wiggle 0.4s infinite alternate;
+    }
+
+    @keyframes wiggle {
+      from { transform: rotate(-2deg); }
+      to { transform: rotate(2deg); }
+    }
+
+    /* BUTTON */
+    button {
+      padding: 1rem 1.5rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 999px;
+      background: hotpink;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      cursor: pointer;
+      animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    button:active { transform: scale(0.95); }
+
+    /* MOBILE FIRST spacing */
+    .container {
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💖 YAY FAITH IS COMING OVER WOOHOOOOOOO 💖</h1>
+
+    <div class="party">🎉🎊🥳💃🕺🎉🎊🥳</div>
+
+    <button onclick="moreLove()">MORE LOVE!!!</button>
+  </div>
+
+  <script>
+    // CREATE FLOATING HEARTS
+    function spawnHeart() {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.innerText = ['💖','💗','💓','💞','💕','❤️'][Math.floor(Math.random()*6)];
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.animationDuration = (4 + Math.random() * 4) + 's';
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 8000);
+    }
+
+    setInterval(spawnHeart, 200);
+
+    // HAMSTERS EVERYWHERE
+    function spawnHamster() {
+      const hamster = document.createElement('div');
+      hamster.className = 'hamster';
+      hamster.innerText = '🐹';
+      hamster.style.top = Math.random() * 80 + 'vh';
+      hamster.style.animationDuration = (4 + Math.random() * 4) + 's';
+      document.body.appendChild(hamster);
+      setTimeout(() => hamster.remove(), 12000);
+    }
+
+    setInterval(spawnHamster, 1500);
+
+    // EXTRA BUTTON MODE
+    function moreLove() {
+      for (let i = 0; i < 30; i++) spawnHeart();
+      for (let i = 0; i < 5; i++) spawnHamster();
+      document.body.style.background = 'linear-gradient(180deg, #ffd1dc, #fff0f8)';
+    }
+  </script>
+</body>
+</html>
