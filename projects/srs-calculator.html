@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SRS Investment Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+                .email > b {
+                display: none;
+            }
+
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+      <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2" style="text-align: center">
+          Singapore SRS Calculator
+        </h1>
+        <br/>
+        <p class="text-gray-600 mb-6">
+          Compare investment approaches with and without taking advantage of Singapore's SRS tax relief scheme. (Tax brackets updated in January 2026) <br/>
+        </p>
+        <br/>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Annual Salary
+            </label>
+            <input
+              id="salary"
+              type="number"
+              value="120000"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Annual SRS Contribution
+              <span class="text-xs text-gray-500 ml-2">Max: $35,700</span>
+            </label>
+            <input
+              id="contribution"
+              type="number"
+              value="35700"
+              max="35700"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Expected Annual Return (%)
+            </label>
+            <input
+              id="returnRate"
+              type="number"
+              value="10"
+              step="0.1"
+              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Investment Growth Comparison</h2>
+          <div class="bg-white p-4 rounded-lg">
+            <canvas id="myChart" style="max-height: 400px;"></canvas>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="results">
+          <!-- Results will be inserted here -->
+        </div>
+
+        <div class="mt-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-6 text-white" id="advantage">
+          <!-- Advantage will be inserted here -->
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Singapore tax calculation
+    function calculateTax(income) {
+      if (income <= 20000) return 0;
+      if (income <= 30000) return (income - 20000) * 0.02;
+      if (income <= 40000) return 200 + (income - 30000) * 0.035;
+      if (income <= 80000) return 550 + (income - 40000) * 0.07;
+      if (income <= 120000) return 3350 + (income - 80000) * 0.115;
+      if (income <= 160000) return 7950 + (income - 120000) * 0.15;
+      if (income <= 200000) return 13950 + (income - 160000) * 0.18;
+      if (income <= 240000) return 21150 + (income - 200000) * 0.19;
+      if (income <= 280000) return 28750 + (income - 240000) * 0.195;
+      if (income <= 320000) return 36550 + (income - 280000) * 0.20;
+      if (income <= 500000) return 44550 + (income - 320000) * 0.22;
+      if (income <= 1000000) return 84150 + (income - 500000) * 0.23;
+      return 199150 + (income - 1000000) * 0.24;
+    }
+
+    function getDetailedWithdrawalTaxBreakdown(salary, taxableWithdrawal) {
+      const baseTax = calculateTax(salary);
+      const brackets = [
+        { threshold: 20000, rate: 0 },
+        { threshold: 30000, rate: 0.02 },
+        { threshold: 40000, rate: 0.035 },
+        { threshold: 80000, rate: 0.07 },
+        { threshold: 120000, rate: 0.115 },
+        { threshold: 160000, rate: 0.15 },
+        { threshold: 200000, rate: 0.18 },
+        { threshold: 240000, rate: 0.19 },
+        { threshold: 280000, rate: 0.195 },
+        { threshold: 320000, rate: 0.20 },
+        { threshold: 500000, rate: 0.22 },
+        { threshold: 1000000, rate: 0.23 },
+        { threshold: Infinity, rate: 0.24 }
+      ];
+      
+      const withdrawalTaxByBracket = [];
+      let remainingWithdrawal = taxableWithdrawal;
+      let currentIncome = salary;
+      
+      for (let i = 0; i < brackets.length && remainingWithdrawal > 0; i++) {
+        const bracketMax = brackets[i].threshold;
+        const rate = brackets[i].rate;
+        
+        if (currentIncome < bracketMax) {
+          const spaceInBracket = bracketMax - currentIncome;
+          const amountInThisBracket = Math.min(remainingWithdrawal, spaceInBracket);
+          const taxOnThisPortion = amountInThisBracket * rate;
+          
+          if (amountInThisBracket > 0) {
+            withdrawalTaxByBracket.push({
+              range: `$${currentIncome.toLocaleString()} - $${Math.min(currentIncome + amountInThisBracket, bracketMax).toLocaleString()}`,
+              rate: `${(rate * 100).toFixed(1)}%`,
+              amount: amountInThisBracket,
+              tax: taxOnThisPortion
+            });
+            
+            currentIncome += amountInThisBracket;
+            remainingWithdrawal -= amountInThisBracket;
+          }
+        }
+      }
+      
+      return { baseTax, withdrawalTaxByBracket };
+    }
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-SG', {
+        style: 'currency',
+        currency: 'SGD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(amount);
+    }
+
+    let myChart = null;
+
+    function calculate() {
+      const annualSalary = parseFloat(document.getElementById('salary').value);
+      const srsContribution = parseFloat(document.getElementById('contribution').value);
+      const returnRate = parseFloat(document.getElementById('returnRate').value) / 100;
+
+      const maxContribution = Math.min(srsContribution, 35700);
+      
+      const taxWithoutSRS = calculateTax(annualSalary);
+      const taxWithSRS = calculateTax(annualSalary - maxContribution);
+      const annualTaxSavings = taxWithoutSRS - taxWithSRS;
+      
+      // Calculate SRS scenario
+      let srsBalance = 0;
+      const srsData = [0];
+      for (let year = 1; year <= 10; year++) {
+        srsBalance = srsBalance * (1 + returnRate) + maxContribution;
+        srsData.push(srsBalance);
+      }
+      
+      const finalSRSBalance = srsBalance;
+      const taxableWithdrawalAmount = finalSRSBalance * 0.5;
+      const taxOnWithdrawal = calculateTax(annualSalary + taxableWithdrawalAmount) - calculateTax(annualSalary);
+      const netSRSAmount = finalSRSBalance - taxOnWithdrawal;
+      const withdrawalBreakdown = getDetailedWithdrawalTaxBreakdown(annualSalary, taxableWithdrawalAmount);
+      
+      // Calculate without SRS scenario
+      const afterTaxContribution = maxContribution - annualTaxSavings;
+      let regularBalance = 0;
+      const regularData = [0];
+      for (let year = 1; year <= 10; year++) {
+        regularBalance = regularBalance * (1 + returnRate) + afterTaxContribution;
+        regularData.push(regularBalance);
+      }
+      
+      const finalRegularBalance = regularBalance;
+      const totalTaxPaidWithoutSRS = annualTaxSavings * 10;
+      const advantage = netSRSAmount - finalRegularBalance;
+
+      // Update chart
+      const ctx = document.getElementById('myChart');
+      if (myChart) {
+        myChart.destroy();
+      }
+      
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          datasets: [{
+            label: 'SRS',
+            data: srsData,
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 3,
+            tension: 0.1
+          }, {
+            label: 'Without SRS',
+            data: regularData,
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderWidth: 3,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                font: {
+                  size: 14
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '$' + (value / 1000).toFixed(0) + 'k';
+                }
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Year'
+              }
+            }
+          }
+        }
+      });
+
+      // Update results
+      document.getElementById('results').innerHTML = `
+        <div class="bg-blue-50 rounded-xl p-6 border-2 border-blue-200">
+          <h3 class="text-xl font-bold text-blue-900 mb-4">SRS</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-700">Final Balance:</span>
+              <span class="font-bold text-blue-900">${formatCurrency(finalSRSBalance)}</span>
+            </div>
+            
+            <div class="border-t border-blue-300 pt-3 mt-3">
+              <div class="text-sm font-semibold text-gray-800 mb-2">Tax Breakdown at Withdrawal: (${formatCurrency(parseFloat(document.getElementById('salary').value))} + ${formatCurrency(taxableWithdrawalAmount)})</div>
+              
+              <div class="text-xs space-y-1 mb-2">                
+                ${withdrawalBreakdown.withdrawalTaxByBracket.map(bracket => `
+                  <div class="flex justify-between text-gray-700 ml-2">
+                    <span class="text-xs">${bracket.range} @ ${bracket.rate}:</span>
+                    <span class="font-semibold">${formatCurrency(bracket.tax)}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            
+            <div class="flex justify-between border-t-2 border-blue-300 pt-2">
+              <span class="text-gray-700 font-semibold">Total Tax on Withdrawal:</span>
+              <span class="font-bold text-red-600">-${formatCurrency(taxOnWithdrawal)}</span>
+            </div>
+            
+            <div class="border-t-2 border-blue-400 pt-3 flex justify-between">
+              <span class="text-gray-900 font-semibold">Net Amount:</span>
+              <span class="font-bold text-blue-900 text-xl">${formatCurrency(netSRSAmount)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-red-50 rounded-xl p-6 border-2 border-red-200">
+          <h3 class="text-xl font-bold text-red-900 mb-4">Without SRS</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-700">Final Balance:</span>
+              <span class="font-bold text-red-900">${formatCurrency(finalRegularBalance)}</span>
+            </div>
+            
+            <div class="border-t border-red-300 pt-3 mt-3">
+              <div class="text-sm font-semibold text-gray-800 mb-2">Tax Paid Over 10 Years:</div>
+              
+              <div class="text-xs space-y-1">
+                <div class="flex justify-between text-gray-700">
+                  <span>Tax per year on ${formatCurrency(maxContribution)}:</span>
+                  <span class="font-semibold">${formatCurrency(annualTaxSavings)}</span>
+                </div>
+                <div class="flex justify-between text-gray-700">
+                  <span>Years:</span>
+                  <span class="font-semibold">× 10</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex justify-between border-t-2 border-red-300 pt-2">
+              <span class="text-gray-700 font-semibold">Total Tax Paid:</span>
+              <span class="font-bold text-red-600">-${formatCurrency(totalTaxPaidWithoutSRS)}</span>
+            </div>
+            
+            <div class="border-t-2 border-red-400 pt-3 flex justify-between">
+              <span class="text-gray-900 font-semibold">Net Amount:</span>
+              <span class="font-bold text-red-900 text-xl">${formatCurrency(finalRegularBalance)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('advantage').innerHTML = `
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="text-xl font-bold mb-1">SRS Advantage After 10 Years</h3>
+            <p class="text-sm opacity-90">Net benefit of using SRS over regular investment</p>
+          </div>
+          <div class="text-4xl font-bold">
+            ${formatCurrency(advantage)}
+          </div>
+        </div>
+      `;
+    }
+
+    // Add event listeners
+    document.getElementById('salary').addEventListener('input', calculate);
+    document.getElementById('contribution').addEventListener('input', calculate);
+    document.getElementById('returnRate').addEventListener('input', calculate);
+
+    // Initial calculation
+    calculate();
+  </script>
+</body>
+</html>
