@@ -8,6 +8,14 @@
     <atom:link href="https://alfasi.me/feed.xml" rel="self" type="application/rss+xml"/>
 
     <item>
+      <title>My Visual Snow</title>
+      <link>https://alfasi.me/blog/my-visual-snow.html</link>
+      <guid>https://alfasi.me/blog/my-visual-snow.html</guid>
+      <pubDate>Wed, 11 Mar 2026 00:00:00 +0000</pubDate>
+      <description>A personal account of living with Visual Snow Syndrome, from diagnosis to managing it day by day.</description>
+    </item>
+
+    <item>
       <title>Get a Dumb Watch</title>
       <link>https://alfasi.me/blog/get-a-dumb-watch.html</link>
       <guid>https://alfasi.me/blog/get-a-dumb-watch.html</guid>
